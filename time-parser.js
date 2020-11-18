@@ -1,6 +1,5 @@
 const parseTime = (rawTime) => {
   if (!isValid()) throw new Error("Invalid input");
-  console.log(rawTime.slice(0, -1), rawTime[rawTime.length - 1]);
 
   switch (rawTime[rawTime.length - 1]) {
     case "s":
@@ -14,7 +13,9 @@ const parseTime = (rawTime) => {
   }
 
   function isValid() {
-    return rawTime.match(/\d+[smhd]/i).length === 1;
+    return (
+      rawTime.match(/\d+[smhd]/i) && rawTime.match(/\d+[smhd]/i).length === 1
+    );
   }
 };
 

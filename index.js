@@ -14,21 +14,28 @@ const REMIND_EVERY_TEMPLATE_MSG = (remindTimeout) =>
   `It's been ${remindTimeout}, take a break. setTimeout(stop, 5m)..`;
 
 const remindAt = (remindTime) => {
-  setTimeout(
-    () =>
-      spawn("notify-send", [
-        "-u",
-        "normal",
-        REMIND_AT_SUMMARY,
-        REMIND_AT_TEMPLATE_MSG(remindTime),
-      ]),
-    parseTime(remindTime) || 5000
-  );
+  try {
+    const parsed = parseTime(remindTime);
+
+    setTimeout(
+      () =>
+        spawn("notify-send", [
+          "-u",
+          "normal",
+          REMIND_AT_SUMMARY,
+          REMIND_AT_TEMPLATE_MSG(remindTime),
+        ]),
+      parsed || 5000
+    );
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+  }
 };
 
 const remindEvery = (periodTime) => {
-  const parsed = parseTime(periodTime);
   try {
+    const parsed = parseTime(periodTime);
+
     setInterval(
       () =>
         spawn("notify-send", [
@@ -41,7 +48,7 @@ const remindEvery = (periodTime) => {
     );
     clearInterval();
   } catch (err) {
-    console.log(err);
+    console.error(`Error: ${err.message}`);
   }
 };
 
@@ -56,4 +63,3 @@ program
   .action((...args) => remindEvery(args[0]));
 
 program.parse(process.argv);
-console.log(program.args);
