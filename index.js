@@ -1,4 +1,9 @@
+#!/usr/bin/env node
+
 const { spawn } = require("child_process");
+const program = require("commander");
+
+const parseTime = require("./time-parser");
 
 const REMIND_AT_SUMMARY = `I believe you've got something to do.`;
 const REMIND_AT_TEMPLATE_MSG = (remindTime) =>
@@ -9,33 +14,46 @@ const REMIND_EVERY_TEMPLATE_MSG = (remindTimeout) =>
   `It's been ${remindTimeout}, take a break. setTimeout(stop, 5m)..`;
 
 const remindAt = (remindTime) => {
-  setTimeout(() => {
-    const reminder = spawn("notify-send", [
-      "-u",
-      "normal",
-      "-t",
-      "2000",
-      REMIND_AT_SUMMARY,
-      REMIND_AT_TEMPLATE_MSG(remindTime),
-    ]);
-
-    reminder.stderr.on("err", (err) => console.log(err));
-  }, remindTime);
+  setTimeout(
+    () =>
+      spawn("notify-send", [
+        "-u",
+        "normal",
+        REMIND_AT_SUMMARY,
+        REMIND_AT_TEMPLATE_MSG(remindTime),
+      ]),
+    parseTime(remindTime) || 5000
+  );
 };
 
 const remindEvery = (periodTime) => {
-  setInterval(() => {
-    const reminder = spawn("notify-send", [
-      "-u",
-      "normal",
-      "-t",
-      "2000",
-      REMIND_EVERY_SUMMARY,
-      REMIND_EVERY_TEMPLATE_MSG(periodTime),
-    ]);
-    reminder.stderr.on("err", (err) => console.log(err));
-  }, periodTime);
+  const parsed = parseTime(periodTime);
+  try {
+    setInterval(
+      () =>
+        spawn("notify-send", [
+          "-u",
+          "normal",
+          REMIND_EVERY_SUMMARY,
+          REMIND_EVERY_TEMPLATE_MSG(periodTime),
+        ]),
+      parsed || 5000
+    );
+    clearInterval();
+  } catch (err) {
+    console.log(err);
+  }
 };
 
-remindAt(5000);
-remindEvery(2000);
+program
+  .command("after <time>")
+  .description("Remind after <time>")
+  .action((...args) => remindAt(args[0]));
+
+program
+  .command("every <time>")
+  .description("Remind every <time>")
+  .action((...args) => remindEvery(args[0]));
+
+program.parse(process.argv);
+console.log(program.args);
